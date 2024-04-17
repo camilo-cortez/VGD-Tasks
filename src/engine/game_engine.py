@@ -5,12 +5,14 @@ import json
 from src.create.prefab_creator import create_input_player, create_player_square, create_enemy_spawner, create_bullet
 from src.ecs.components.c_enemy_spawner import SpawnEventData
 from src.ecs.components.c_input_command import CInputCommand, CommandPhase
+from src.ecs.systems.s_animation import system_animation
 from src.ecs.systems.s_bullet_limits import system_bullet_limits
 from src.ecs.systems.s_collision_bullet_enemy import system_collision_bullet_enemy
 from src.ecs.systems.s_collision_player_enemy import system_collision_player_enemy
 from src.ecs.systems.s_input_player import system_input_player
 from src.ecs.systems.s_movement import system_movement
 from src.ecs.systems.s_player_limits import system_player_limits
+from src.ecs.systems.s_player_state import system_player_state
 from src.ecs.systems.s_rendering import system_rendering
 from src.ecs.systems.s_screen_bounce import system_screen_bounce
 from src.ecs.systems.s_enemy_spawner import system_enemy_spawner
@@ -63,6 +65,7 @@ class GameEngine:
        self._player_entity = create_player_square(self.ecs_world, self.player_cfg, self.level_01_cfg["player_spawn"])
        self._player_c_v = self.ecs_world.component_for_entity(self._player_entity, CVelocity)
        self._player_c_t = self.ecs_world.component_for_entity(self._player_entity, CTransform)
+       self._player_c_s = self.ecs_world.component_for_entity(self._player_entity, CSurface)
        create_enemy_spawner(self.ecs_world, self.level_01_cfg)
        create_input_player(self.ecs_world)
        
@@ -80,11 +83,15 @@ class GameEngine:
         self.cursor_pos = pygame.mouse.get_pos()
         system_enemy_spawner(self.ecs_world, self.enemies_cfg, self.delta_time)
         system_movement(self.ecs_world, self.delta_time)
+        system_player_state(self.ecs_world)
+
         system_screen_bounce(self.ecs_world, self.screen)
         system_player_limits(self.ecs_world, self.screen, self._player_entity)
         system_bullet_limits(self.ecs_world, self.screen)
         system_collision_player_enemy(self.ecs_world, self._player_entity, self.level_01_cfg)
         system_collision_bullet_enemy(self.ecs_world)
+
+        system_animation(self.ecs_world, self.delta_time)
         self.ecs_world._clear_dead_entities()
 
     def _draw(self):
@@ -119,7 +126,7 @@ class GameEngine:
                 self._player_c_v.vel.y -= self.player_cfg["input_velocity"]
         elif c_input.name == "PLAYER_FIRE":
             if c_input.phase == CommandPhase.START:
-                player_size = pygame.Vector2(self.player_cfg["size"]["x"], self.player_cfg['size']['y'])
+                player_size = pygame.Vector2(self._player_c_s.area.size[0], self._player_c_s.area.size[1])
                 cursor_pos = pygame.mouse.get_pos()
                 max_bullets = self.level_01_cfg["player_spawn"]["max_bullets"]
                 current_bullets = len(self.ecs_world.get_component(CTagBullet))

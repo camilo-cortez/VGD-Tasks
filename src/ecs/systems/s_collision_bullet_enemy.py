@@ -13,9 +13,9 @@ def system_collision_bullet_enemy(world:esper.World):
     c_te: CTransform
 
     for bullet_entity, (c_s, c_t, _) in bullet_components:
-        bullet_rect = c_s.surf.get_rect(topleft = c_t.pos)
+        bullet_rect = CSurface.get_area_relative(c_s.area, c_t.pos)
         for enemy_entity, (c_se, c_te, _) in enemy_components:
-            enemy_rect = c_se.surf.get_rect(topleft = c_te.pos)
+            enemy_rect = CSurface.get_area_relative(c_se.area, c_te.pos)
             if bullet_rect.colliderect(enemy_rect):
                 world.delete_entity(bullet_entity)
                 world.delete_entity(enemy_entity)

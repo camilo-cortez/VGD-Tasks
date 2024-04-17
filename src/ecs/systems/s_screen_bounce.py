@@ -14,7 +14,7 @@ def system_screen_bounce(world:esper.World, screen:pygame.Surface):
     c_s:CSurface
     c_e:CTagEnemy
     for entity, (c_t, c_v, c_s, c_e) in components:
-        cuad_rect = c_s.surf.get_frect(topleft=c_t.pos)
+        cuad_rect = CSurface.get_area_relative(c_s.area, c_t.pos)
         if cuad_rect.left < 0 or cuad_rect.right > screen_rect.width:
             c_v.vel.x *= -1
             cuad_rect.clamp_ip(screen_rect)
