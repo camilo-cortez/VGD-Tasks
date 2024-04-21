@@ -9,6 +9,8 @@ from src.ecs.systems.s_animation import system_animation
 from src.ecs.systems.s_bullet_limits import system_bullet_limits
 from src.ecs.systems.s_collision_bullet_enemy import system_collision_bullet_enemy
 from src.ecs.systems.s_collision_player_enemy import system_collision_player_enemy
+from src.ecs.systems.s_delete_explosion import system_delete_explosions
+from src.ecs.systems.s_hunter_state import system_hunter_state
 from src.ecs.systems.s_input_player import system_input_player
 from src.ecs.systems.s_movement import system_movement
 from src.ecs.systems.s_player_limits import system_player_limits
@@ -50,6 +52,8 @@ class GameEngine:
             self.player_cfg = json.load(player_file)
         with open('./assets/cfg/bullet.json') as bullet_file:
             self.bullet_cfg = json.load(bullet_file)
+        with open('./assets/cfg/explosion.json') as explosion_file:
+            self.explosion_cfg = json.load(explosion_file)
 
     def run(self) -> None:
         self._create()
@@ -84,14 +88,16 @@ class GameEngine:
         system_enemy_spawner(self.ecs_world, self.enemies_cfg, self.delta_time)
         system_movement(self.ecs_world, self.delta_time)
         system_player_state(self.ecs_world)
+        system_hunter_state(self.ecs_world, self._player_entity, self.enemies_cfg["Hunter"])
 
         system_screen_bounce(self.ecs_world, self.screen)
         system_player_limits(self.ecs_world, self.screen, self._player_entity)
         system_bullet_limits(self.ecs_world, self.screen)
-        system_collision_player_enemy(self.ecs_world, self._player_entity, self.level_01_cfg)
-        system_collision_bullet_enemy(self.ecs_world)
+        system_collision_player_enemy(self.ecs_world, self._player_entity, self.level_01_cfg, self.explosion_cfg)
+        system_collision_bullet_enemy(self.ecs_world, self.explosion_cfg)
 
         system_animation(self.ecs_world, self.delta_time)
+        system_delete_explosions(self.ecs_world)
         self.ecs_world._clear_dead_entities()
 
     def _draw(self):

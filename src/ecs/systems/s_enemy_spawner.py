@@ -16,4 +16,5 @@ def system_enemy_spawner(world:esper.World, enemies_data:dict, delta_time:float)
                 print(f"{c_s.current_time} > {spw_evt.time}")
                 create_enemy_square(world,
                                     spw_evt.position,
-                                    enemies_data[spw_evt.enemy_type])
+                                    enemies_data[spw_evt.enemy_type],
+                                    spw_evt.enemy_type)

@@ -3,6 +3,7 @@ import pygame
 import random
 
 from src.ecs.components.c_animation import CAnimation
+from src.ecs.components.c_hunter_state import CHunterState
 from src.ecs.components.c_input_command import CInputCommand
 from src.ecs.components.c_player_state import CPlayerState
 from src.ecs.components.c_surface import CSurface
@@ -11,6 +12,8 @@ from src.ecs.components.c_velocity import CVelocity
 from src.ecs.components.c_enemy_spawner import CEnemySpawner, SpawnEventData
 from src.ecs.components.tags.c_tag_bullet import CTagBullet
 from src.ecs.components.tags.c_tag_enemy import CTagEnemy
+from src.ecs.components.tags.c_tag_explosion import CTagExplosion
+from src.ecs.components.tags.c_tag_hunter import CTagHunter
 from src.ecs.components.tags.c_tag_player import CTagPlayer
 
 def crear_cuadrado(ecs_world:esper.World,
@@ -34,14 +37,17 @@ def create_sprite(world:esper.World, pos:pygame.Vector2, vel:pygame.Vector2, sur
     world.add_component(sprite_entity, CSurface.from_surface(surface))
     return sprite_entity
 
-def create_enemy_square(world:esper.World, pos:pygame.Vector2, enemy_info:dict):
+def create_enemy_square(world:esper.World, pos:pygame.Vector2, enemy_info:dict, enemy_type:str):
     enemy_surface = pygame.image.load(enemy_info['image']).convert_alpha()
-    vel_max = enemy_info['velocity_max']
-    vel_min = enemy_info['velocity_min']
-    vel_range = random.randrange(vel_min, vel_max)
-    velocity = pygame.Vector2(random.choice([-vel_range, vel_range]), random.choice([-vel_range, vel_range]))
-    enemy_entity = create_sprite(world, pos, velocity, enemy_surface)
-    world.add_component(enemy_entity, CTagEnemy())
+    if enemy_type == 'Hunter':
+        create_hunter(world, pos, enemy_info)
+    else:
+        vel_max = enemy_info['velocity_max']
+        vel_min = enemy_info['velocity_min']
+        vel_range = random.randrange(vel_min, vel_max)
+        velocity = pygame.Vector2(random.choice([-vel_range, vel_range]), random.choice([-vel_range, vel_range]))
+        enemy_entity = create_sprite(world, pos, velocity, enemy_surface)
+        world.add_component(enemy_entity, CTagEnemy())
     
 def create_enemy_spawner(ecs_world:esper.World, level_data:dict):
     spawner_entity = ecs_world.create_entity()
@@ -84,3 +90,20 @@ def create_bullet(world:esper.World, pos_player:pygame.Vector2, pos_cursor:pygam
                         pos_player.y + player_size.y/2 - (bullet_size[1] / 2 ))
     bullet_entity = create_sprite(world, pos, vel, bullet_surface)
     world.add_component(bullet_entity, CTagBullet())
+
+def create_explosion(world:esper.World, pos:pygame.Vector2, explosion_info:dict):
+    explosion_surf = pygame.image.load(explosion_info['image'])
+    vel = pygame.Vector2(0,0)
+    explosion_entity = create_sprite(world, pos, vel, explosion_surf)
+    world.add_component(explosion_entity, CTagExplosion())
+    world.add_component(explosion_entity, CAnimation(explosion_info["animations"]))
+
+def create_hunter(world:esper.World, pos:pygame.Vector2, hunter_info:dict):
+    hunter_surface = pygame.image.load(hunter_info['image']).convert_alpha()
+    velocity = pygame.Vector2(0,0)
+    hunter_entity = create_sprite(world, pos, velocity, hunter_surface)
+    #world.add_component(hunter_entity, CTagHunter())
+    world.add_component(hunter_entity, CAnimation(hunter_info["animations"]))
+    world.add_component(hunter_entity, CHunterState(pos.copy()))
+    world.add_component(hunter_entity, CTagEnemy())
+
