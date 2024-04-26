@@ -6,6 +6,7 @@ from src.ecs.components.c_animation import CAnimation
 from src.ecs.components.c_hunter_state import CHunterState
 from src.ecs.components.c_input_command import CInputCommand
 from src.ecs.components.c_player_state import CPlayerState
+from src.ecs.components.c_powerup_timer import CPowerupTimer
 from src.ecs.components.c_surface import CSurface
 from src.ecs.components.c_transform import CTransform
 from src.ecs.components.c_velocity import CVelocity
@@ -79,6 +80,7 @@ def create_input_player(world:esper.World):
     input_down = world.create_entity()
     input_fire = world.create_entity()
     input_pause = world.create_entity()
+    input_powerup = world.create_entity()
 
     world.add_component(input_left, CInputCommand("PLAYER_LEFT", pygame.K_LEFT))
     world.add_component(input_right, CInputCommand("PLAYER_RIGHT", pygame.K_RIGHT))
@@ -86,6 +88,7 @@ def create_input_player(world:esper.World):
     world.add_component(input_down, CInputCommand("PLAYER_DOWN", pygame.K_DOWN))
     world.add_component(input_pause, CInputCommand("PAUSE", pygame.K_p))
     world.add_component(input_fire, CInputCommand("PLAYER_FIRE", pygame.BUTTON_LEFT))
+    world.add_component(input_powerup, CInputCommand("PLAYER_POWERUP", pygame.BUTTON_RIGHT))
 
 def create_bullet(world:esper.World, pos_player:pygame.Vector2, pos_cursor:pygame.Vector2, bullet_info:dict, player_size:pygame.Vector2):
     bullet_surface = ServiceLocator.images_service.get(bullet_info["image"])
@@ -126,6 +129,19 @@ def create_interface(world:esper.World, interface_info:dict):
                             pygame.Color(val["color"]["r"],val["color"]["g"],val["color"]["b"]), 
                             ServiceLocator.fonts_service.get(val["font"], val["size"]), val["size"]))
         
+def create_powerup_interface(world:esper.World, screen:pygame.Surface):
+    text_size = 15
+    pos = pygame.Vector2(0, screen.get_height() - text_size * 2) #bottom left
+    text_entity = world.create_entity()
+    world.add_component(text_entity, CTransform(pos))
+    world.add_component(text_entity, 
+                        CSurface.from_text("100%", 
+                                            pygame.Color(255, 255, 255), 
+                                            ServiceLocator.fonts_service.get("assets/fnt/PressStart2P.ttf", text_size), 
+                                            text_size))
+    return text_entity
+    
+
 def create_pause_text(world:esper.World, pos:pygame.Vector2, font:pygame.Font):
     pt_entity = world.create_entity()
     world.add_component(pt_entity, CTransform(pos))
@@ -136,3 +152,30 @@ def create_pause_text(world:esper.World, pos:pygame.Vector2, font:pygame.Font):
                                             20)
                         )
     return pt_entity
+
+def create_powerup_timer(world:esper.World, max_time:float):
+    timer_entity = world.create_entity()
+    world.add_component(timer_entity, CPowerupTimer(max_time))
+    return timer_entity
+
+def create_powerup_bullets(world:esper.World, bullet_info:dict):
+    pu_bullet_surface = ServiceLocator.images_service.get(bullet_info["image"])
+    pu_bullet_size = pu_bullet_surface.get_rect().size
+    vel_directions = [
+        pygame.Vector2(1,1).normalize(),
+        pygame.Vector2(-1,1).normalize(),
+        pygame.Vector2(1,-1).normalize(),
+        pygame.Vector2(-1,-1).normalize()
+    ]
+    components = world.get_components(CTagBullet, CTransform)
+    c_b:CTagBullet
+    c_t:CTransform
+    for bullet_entity, (c_b, c_t) in components:
+        for vel_dir in vel_directions:
+            vel = vel_dir * bullet_info["velocity"]
+            pos = pygame.Vector2(c_t.pos.x - (pu_bullet_size[0] / 2 ),
+                                c_t.pos.y - (pu_bullet_size[1] / 2 ))
+            bullet_pu_entity = create_sprite(world, pos, vel, pu_bullet_surface)
+            world.add_component(bullet_pu_entity, CTagBullet())
+        world.delete_entity(bullet_entity)
+    ServiceLocator.sounds_service.play(bullet_info["sound"])

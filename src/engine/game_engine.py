@@ -2,9 +2,10 @@ import pygame
 import esper
 import json
 
-from src.create.prefab_creator import create_input_player, create_pause_text, create_player_square, create_enemy_spawner, create_bullet, create_interface
+from src.create.prefab_creator import create_input_player, create_pause_text, create_player_square, create_enemy_spawner, create_bullet, create_interface, create_powerup_bullets, create_powerup_interface, create_powerup_timer
 from src.ecs.components.c_enemy_spawner import SpawnEventData
 from src.ecs.components.c_input_command import CInputCommand, CommandPhase
+from src.ecs.components.c_powerup_timer import CPowerupTimer
 from src.ecs.systems.s_animation import system_animation
 from src.ecs.systems.s_bullet_limits import system_bullet_limits
 from src.ecs.systems.s_collision_bullet_enemy import system_collision_bullet_enemy
@@ -15,6 +16,7 @@ from src.ecs.systems.s_input_player import system_input_player
 from src.ecs.systems.s_movement import system_movement
 from src.ecs.systems.s_player_limits import system_player_limits
 from src.ecs.systems.s_player_state import system_player_state
+from src.ecs.systems.s_powerup_timer import system_powerup_timer
 from src.ecs.systems.s_rendering import system_rendering
 from src.ecs.systems.s_screen_bounce import system_screen_bounce
 from src.ecs.systems.s_enemy_spawner import system_enemy_spawner
@@ -55,6 +57,8 @@ class GameEngine:
             self.explosion_cfg = json.load(explosion_file)
         with open('./assets/cfg/interface.json') as interface_file:
             self.interface_cfg = json.load(interface_file)
+        with open('./assets/cfg/bullet_pu.json') as bullet_pu_file:
+            self.bullet_pu_cfg = json.load(bullet_pu_file)
 
     def run(self) -> None:
         self._create()
@@ -75,8 +79,10 @@ class GameEngine:
        self._pause_font = ServiceLocator.fonts_service.get('assets/fnt/PressStart2P.ttf', 20)
        self._pause_entity = None
        create_interface(self.ecs_world, self.interface_cfg)
+       self._powerup_interface = create_powerup_interface(self.ecs_world, self.screen)
        create_enemy_spawner(self.ecs_world, self.level_01_cfg)
        create_input_player(self.ecs_world)
+       self._powerup_timer_entity = create_powerup_timer(self.ecs_world, 5.0)
        
     def _calculate_time(self):
         self.clock.tick(self.framerate)
@@ -102,6 +108,7 @@ class GameEngine:
             system_collision_player_enemy(self.ecs_world, self._player_entity, self.level_01_cfg, self.explosion_cfg)
             system_collision_bullet_enemy(self.ecs_world, self.explosion_cfg)
             system_animation(self.ecs_world, self.delta_time)
+            system_powerup_timer(self.ecs_world, self.delta_time, self._powerup_interface)
 
             system_delete_explosions(self.ecs_world)
         self.ecs_world._clear_dead_entities()
@@ -151,6 +158,13 @@ class GameEngine:
                 current_bullets = len(self.ecs_world.get_component(CTagBullet))
                 if (current_bullets < max_bullets):
                     create_bullet(self.ecs_world, self._player_c_t.pos, pygame.Vector2(cursor_pos[0], cursor_pos[1]), self.bullet_cfg, player_size)
+        elif c_input.name == "PLAYER_POWERUP":
+            pu_timer = self.ecs_world.component_for_entity(self._powerup_timer_entity, CPowerupTimer)
+            can_use = pu_timer.reset()
+            if (can_use == True):
+                create_powerup_bullets(self.ecs_world, self.bullet_pu_cfg)
+            else:
+                print(f"on cd: {pu_timer.current_time}")
         
   
 

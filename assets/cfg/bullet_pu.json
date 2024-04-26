@@ -1,0 +1,5 @@
+{
+    "sound" : "assets/snd/retro-underwater-shot.ogg",
+    "image": "assets/img/bullet_pu.png",
+    "velocity": 300
+}
