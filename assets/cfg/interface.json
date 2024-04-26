@@ -1,0 +1,30 @@
+{
+    "title":{
+        "font": "assets/fnt/PressStart2P.ttf",
+        "text": "Ejercicio 04",
+        "color":{
+            "r": 255,
+            "g": 255,
+            "b": 255
+        },
+        "size": 15,
+        "position": {
+            "x": 5,
+            "y": 10
+        }
+    },
+    "subtitle":{
+        "font": "assets/fnt/PressStart2P.ttf",
+        "text": "Controles: Flechas, click izquierdo, espacio",
+        "color":{
+            "r": 100,
+            "g": 100,
+            "b": 200
+        },
+        "size": 10,
+        "position": {
+            "x": 5,
+            "y": 30
+        }
+    }
+}

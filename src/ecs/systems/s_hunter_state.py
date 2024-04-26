@@ -4,6 +4,7 @@ from src.ecs.components.c_animation import CAnimation
 from src.ecs.components.c_hunter_state import CHunterState, HunterState
 from src.ecs.components.c_transform import CTransform
 from src.ecs.components.c_velocity import CVelocity
+from src.engine.service_locator import ServiceLocator
 
 
 def system_hunter_state(world:esper.World, player_entity:int, hunter_cfg:dict):
@@ -22,6 +23,7 @@ def _do_idle_state(c_v:CVelocity, c_a:CAnimation, c_t: CTransform, c_hst:CHunter
     c_v.vel = pygame.Vector2(0,0)
 
     if (c_t.pos - pl_t.pos).magnitude_squared() < hunter_cfg["distance_start_chase"] ** 2:
+        ServiceLocator.sounds_service.play(hunter_cfg["sound_chase"])
         c_hst.state = HunterState.CHASE
 
 def _do_chase_state(c_v:CVelocity, c_a:CAnimation, c_t: CTransform, c_hst:CHunterState, pl_t:CTransform, hunter_cfg:dict):

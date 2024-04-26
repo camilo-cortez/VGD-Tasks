@@ -12,9 +12,9 @@ def system_input_player(world:esper.World, event:pygame.event.Event, do_action:C
         elif event.type == pygame.KEYUP and c_input.key == event.key:
             c_input.phase = CommandPhase.END
             do_action(c_input)
-        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+        elif event.type == pygame.MOUSEBUTTONDOWN and c_input.key == event.button:
             c_input.phase = CommandPhase.START
             do_action(c_input)
-        elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+        elif event.type == pygame.MOUSEBUTTONDOWN and c_input.key == event.button:
             c_input.phase = CommandPhase.END
             do_action(c_input)
